@@ -81,6 +81,9 @@ export interface DoencaResumo {
   cid10: string | null;
   status: Status;
   descricao_medica: string | null;
+  descricao_metafisica: string | null;
+  fontes: string | null;
+  reiki: string[] | null;
 }
 
 export interface Sugestao {
