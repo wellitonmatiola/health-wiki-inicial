@@ -9,7 +9,7 @@ async function getData() {
 
   const [sugestoesRes, doencasRes, chasRes, chakrasRes, cristaisRes, aromRes, cromoRes, causasRes] = await Promise.all([
     db.from('sugestoes').select('*, doencas(nome)').order('criado_em', { ascending: false }),
-    db.from('doencas').select('id, nome, cid10, status, descricao_medica, descricao_metafisica, fontes, reiki').order('nome'),
+    db.from('doencas').select('id, nome, cid10, status, descricao_medica, descricao_metafisica, fontes, fontes_medicas, fontes_metafisicas, fontes_complementares, reiki').order('nome'),
     db.from('chas').select('id, nome, nome_cientifico, tipo, beneficios_gerais, preparo, cuidados').order('nome'),
     db.from('chakras').select('id, nome, cor, sanscrito, bija_mantra, elemento_natureza').order('nome'),
     db.from('cristais').select('id, nome, beneficios_gerais, forma_aplicacao').order('nome'),

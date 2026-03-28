@@ -6,6 +6,7 @@ import type { Doenca } from '@/lib/types';
 import { COR_CHAKRA } from '@/lib/utils';
 import SugestaoModal from '@/components/SugestaoModal';
 import RichText from '@/components/RichText';
+import CollapsibleSection from '@/components/CollapsibleSection';
 
 async function getDoenca(id: string): Promise<Doenca | null> {
   const { data } = await supabase
@@ -61,22 +62,31 @@ export default async function DoencaPage({ params }: { params: { id: string } })
         {/* Descrição Médica */}
         {doenca.descricao_medica && (
           <section className="card-flat p-7 mb-6 animate-fade-up delay-1">
-            <h2 className="font-serif text-xl font-semibold mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-forest-500 inline-block" />
-              Visão Médica
-            </h2>
-            <RichText content={doenca.descricao_medica} />
+            <CollapsibleSection
+              content={doenca.descricao_medica}
+              title={
+                <h2 className="font-serif text-xl font-semibold flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-forest-500 inline-block" />
+                  Visão Médica
+                </h2>
+              }
+            />
           </section>
         )}
 
         {/* Descrição Metafísica */}
         {doenca.descricao_metafisica && (
           <section className="card-flat p-7 mb-6 animate-fade-up delay-2" style={{ borderLeft: '3px solid var(--border)' }}>
-            <h2 className="font-serif text-xl font-semibold mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-terra-400 inline-block" />
-              Causa Metafísica
-            </h2>
-            <RichText content={doenca.descricao_metafisica} italic />
+            <CollapsibleSection
+              content={doenca.descricao_metafisica}
+              italic
+              title={
+                <h2 className="font-serif text-xl font-semibold flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-terra-400 inline-block" />
+                  Causa Metafísica
+                </h2>
+              }
+            />
           </section>
         )}
 

@@ -95,12 +95,10 @@ export default function SearchBar({ initialQuery, allDoencas }: Props) {
     }
   }
 
-  const mostrarGrid = !aberto || !query.trim();
-
   return (
     <>
       {/* Barra de busca */}
-      <div ref={containerRef} className="relative max-w-xl mx-auto animate-fade-up delay-2">
+      <div ref={containerRef} className="relative z-10 max-w-xl mx-auto animate-fade-up delay-2">
         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)] pointer-events-none z-10" />
         <input
           ref={inputRef}
@@ -140,14 +138,6 @@ export default function SearchBar({ initialQuery, allDoencas }: Props) {
                     )}
                   </Link>
                 ))}
-                {resultados.length > 6 && (
-                  <button
-                    onClick={() => { setAberto(false); router.push(`/?q=${encodeURIComponent(query)}`); }}
-                    className="w-full text-center text-xs text-forest-600 font-medium px-4 py-2.5 hover:bg-parchment-50 transition-colors"
-                  >
-                    Ver todos os {resultados.length} resultados →
-                  </button>
-                )}
               </>
             )}
           </div>
@@ -156,23 +146,10 @@ export default function SearchBar({ initialQuery, allDoencas }: Props) {
 
       {/* Grid de resultados */}
       <section className="max-w-5xl mx-auto px-6 pb-20 mt-8">
-        {query.trim() && (
-          <div className="divider mb-8">
-            {resultados.length} resultado{resultados.length !== 1 ? 's' : ''} para "{query}"
-          </div>
-        )}
-        {!query.trim() && (
-          <div className="divider mb-8">Todas as doenças</div>
-        )}
+        <div className="divider mb-8">Todas as doenças</div>
 
-        {resultados.length === 0 ? (
-          <div className="text-center py-20 text-[var(--muted)]">
-            <p className="font-serif text-2xl mb-2">Nenhum resultado encontrado</p>
-            <p className="text-sm">Tente buscar por outro termo</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {resultados.map((d, i) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {allDoencas.map((d, i) => (
               <Link
                 key={d.id}
                 href={`/doencas/${d.id}`}
@@ -198,8 +175,7 @@ export default function SearchBar({ initialQuery, allDoencas }: Props) {
                 </span>
               </Link>
             ))}
-          </div>
-        )}
+        </div>
       </section>
     </>
   );

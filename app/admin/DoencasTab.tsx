@@ -11,6 +11,10 @@ interface Props {
 }
 
 const STATUS_OPTIONS: Status[] = ['Em coleta', 'Revisão', 'Publicado'];
+
+function normalizar(str: string) {
+  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
 const STATUS_CLASS: Record<Status, string> = {
   'Publicado': 'status-publicado',
   'Revisão': 'status-revisao',
@@ -55,7 +59,7 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const filtradas = useMemo(() => doencas.filter((d) => {
-    const matchBusca = d.nome.toLowerCase().includes(busca.toLowerCase());
+    const matchBusca = normalizar(d.nome).includes(normalizar(busca));
     const matchStatus = filtroStatus === 'todos' || d.status === filtroStatus;
     return matchBusca && matchStatus;
   }), [doencas, busca, filtroStatus]);
