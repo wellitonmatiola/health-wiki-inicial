@@ -16,12 +16,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   try {
     const body = await req.json();
-    const { nome, cid10, descricao_medica, descricao_metafisica, fontes, status } = body;
+    const { nome, cid10, descricao_medica, descricao_metafisica, fontes, fontes_medicas, fontes_metafisicas, fontes_complementares, status } = body;
 
     const db = supabaseAdmin();
     const { error } = await db
       .from('doencas')
-      .update({ nome, cid10, descricao_medica, descricao_metafisica, fontes, status })
+      .update({ nome, cid10, descricao_medica, descricao_metafisica, fontes, fontes_medicas, fontes_metafisicas, fontes_complementares, status })
       .eq('id', params.id);
 
     if (error) throw error;

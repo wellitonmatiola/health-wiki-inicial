@@ -33,6 +33,9 @@ const FORM_VAZIO = {
   descricao_medica: '',
   descricao_metafisica: '',
   fontes: '',
+  fontes_medicas: '',
+  fontes_metafisicas: '',
+  fontes_complementares: '',
   status: 'Em coleta' as Status,
   reiki: [] as string[],
 };
@@ -375,15 +378,38 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Fontes e referências</label>
-                <textarea
-                  className="textarea"
-                  style={{ minHeight: 80 }}
-                  placeholder="Títulos, autores, links..."
-                  value={form.fontes ?? ''}
-                  onChange={(e) => setForm({ ...form, fontes: e.target.value })}
-                />
+              <div className="space-y-3">
+                <div className="divider text-xs">Fontes e referências</div>
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Fontes médicas</label>
+                  <textarea
+                    className="textarea"
+                    style={{ minHeight: 70 }}
+                    placeholder="Mayo Clinic, MedlinePlus, PubMed, Ministério da Saúde..."
+                    value={form.fontes_medicas ?? ''}
+                    onChange={(e) => setForm({ ...form, fontes_medicas: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Fontes metafísicas</label>
+                  <textarea
+                    className="textarea"
+                    style={{ minHeight: 70 }}
+                    placeholder="Louise Hay, Lise Bourbeau, Valcapelli, Dethlefsen..."
+                    value={form.fontes_metafisicas ?? ''}
+                    onChange={(e) => setForm({ ...form, fontes_metafisicas: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1.5 block">Fontes de terapias complementares</label>
+                  <textarea
+                    className="textarea"
+                    style={{ minHeight: 70 }}
+                    placeholder="Tisserand Institute, Crystal Bible, Reiki, fitoterapia..."
+                    value={form.fontes_complementares ?? ''}
+                    onChange={(e) => setForm({ ...form, fontes_complementares: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
 

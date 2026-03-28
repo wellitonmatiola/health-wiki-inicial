@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import type { Doenca } from '@/lib/types';
 import { COR_CHAKRA } from '@/lib/utils';
 import SugestaoModal from '@/components/SugestaoModal';
+import RichText from '@/components/RichText';
 
 async function getDoenca(id: string): Promise<Doenca | null> {
   const { data } = await supabase
@@ -59,23 +60,23 @@ export default async function DoencaPage({ params }: { params: { id: string } })
 
         {/* Descrição Médica */}
         {doenca.descricao_medica && (
-          <section className="card p-7 mb-6 animate-fade-up delay-1">
-            <h2 className="font-serif text-xl font-semibold mb-3 flex items-center gap-2">
+          <section className="card-flat p-7 mb-6 animate-fade-up delay-1">
+            <h2 className="font-serif text-xl font-semibold mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-forest-500 inline-block" />
               Visão Médica
             </h2>
-            <p className="text-[var(--muted)] leading-relaxed">{doenca.descricao_medica}</p>
+            <RichText content={doenca.descricao_medica} />
           </section>
         )}
 
         {/* Descrição Metafísica */}
         {doenca.descricao_metafisica && (
-          <section className="card p-7 mb-6 animate-fade-up delay-2" style={{ borderLeft: '3px solid var(--border)' }}>
-            <h2 className="font-serif text-xl font-semibold mb-3 flex items-center gap-2">
+          <section className="card-flat p-7 mb-6 animate-fade-up delay-2" style={{ borderLeft: '3px solid var(--border)' }}>
+            <h2 className="font-serif text-xl font-semibold mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-terra-400 inline-block" />
               Causa Metafísica
             </h2>
-            <p className="text-[var(--muted)] leading-relaxed italic">{doenca.descricao_metafisica}</p>
+            <RichText content={doenca.descricao_metafisica} italic />
           </section>
         )}
 
@@ -84,7 +85,7 @@ export default async function DoencaPage({ params }: { params: { id: string } })
 
           {/* Causas Emocionais */}
           {doenca.causas_emocionais?.length > 0 && (
-            <section className="card p-6 animate-fade-up delay-2">
+            <section className="card-flat p-6 animate-fade-up delay-2">
               <h2 className="font-serif text-lg font-semibold mb-4">🥲 Causas Emocionais</h2>
               <div className="space-y-3">
                 {doenca.causas_emocionais.map((c) => (
@@ -104,7 +105,7 @@ export default async function DoencaPage({ params }: { params: { id: string } })
 
           {/* Chakras */}
           {doenca.chakras?.length > 0 && (
-            <section className="card p-6 animate-fade-up delay-2">
+            <section className="card-flat p-6 animate-fade-up delay-2">
               <h2 className="font-serif text-lg font-semibold mb-4">🌈 Chakras Relacionados</h2>
               <div className="space-y-3">
                 {doenca.chakras.map((ch) => (
@@ -127,7 +128,7 @@ export default async function DoencaPage({ params }: { params: { id: string } })
 
           {/* Chás */}
           {doenca.chas?.length > 0 && (
-            <section className="card p-6 animate-fade-up delay-3">
+            <section className="card-flat p-6 animate-fade-up delay-3">
               <h2 className="font-serif text-lg font-semibold mb-4">🍵 Chás Indicados</h2>
               <div className="space-y-4">
                 {doenca.chas.map((c) => (
@@ -161,7 +162,7 @@ export default async function DoencaPage({ params }: { params: { id: string } })
 
           {/* Cristais */}
           {doenca.cristais?.length > 0 && (
-            <section className="card p-6 animate-fade-up delay-3">
+            <section className="card-flat p-6 animate-fade-up delay-3">
               <h2 className="font-serif text-lg font-semibold mb-4">💎 Cristais Indicados</h2>
               <div className="space-y-3">
                 {doenca.cristais.map((c) => (
@@ -181,7 +182,7 @@ export default async function DoencaPage({ params }: { params: { id: string } })
 
           {/* Aromaterapia */}
           {doenca.aromaterapia?.length > 0 && (
-            <section className="card p-6 animate-fade-up delay-4">
+            <section className="card-flat p-6 animate-fade-up delay-4">
               <h2 className="font-serif text-lg font-semibold mb-4">🌺 Aromaterapia</h2>
               <div className="space-y-3">
                 {doenca.aromaterapia.map((a) => (
@@ -201,7 +202,7 @@ export default async function DoencaPage({ params }: { params: { id: string } })
 
           {/* Cromoterapia */}
           {doenca.cromoterapia?.length > 0 && (
-            <section className="card p-6 animate-fade-up delay-4">
+            <section className="card-flat p-6 animate-fade-up delay-4">
               <h2 className="font-serif text-lg font-semibold mb-4">💡 Cromoterapia</h2>
               <div className="space-y-3">
                 {doenca.cromoterapia.map((c) => (
@@ -226,7 +227,7 @@ export default async function DoencaPage({ params }: { params: { id: string } })
             <div className="divider mb-6">Perguntas para reflexão</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {doenca.perguntas.map((p) => (
-                <div key={p.id} className="card p-4 border-l-2 border-l-forest-400">
+                <div key={p.id} className="card-flat p-4 border-l-2 border-l-forest-400">
                   <p className="text-sm text-[var(--muted)] italic leading-relaxed">{p.pergunta}</p>
                 </div>
               ))}
@@ -234,11 +235,36 @@ export default async function DoencaPage({ params }: { params: { id: string } })
           </section>
         )}
 
-        {/* Fontes */}
-        {doenca.fontes && (
-          <section className="mt-10 pt-8 border-t border-[var(--border)] animate-fade-up delay-5">
-            <h2 className="font-serif text-base font-semibold mb-3 text-[var(--muted)]">Fontes e Referências</h2>
-            <p className="text-sm text-[var(--muted)] leading-relaxed">{doenca.fontes}</p>
+        {/* Fontes separadas */}
+        {(doenca.fontes_medicas || doenca.fontes_metafisicas || doenca.fontes_complementares || doenca.fontes) && (
+          <section className="mt-10 pt-8 border-t border-[var(--border)] animate-fade-up delay-5 space-y-6">
+            <h2 className="font-serif text-base font-semibold text-[var(--muted)]">Fontes e Referências</h2>
+
+            {doenca.fontes_medicas && (
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-2">Médicas</h3>
+                <RichText content={doenca.fontes_medicas} small />
+              </div>
+            )}
+
+            {doenca.fontes_metafisicas && (
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-2">Metafísicas</h3>
+                <RichText content={doenca.fontes_metafisicas} small />
+              </div>
+            )}
+
+            {doenca.fontes_complementares && (
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)] mb-2">Terapias Complementares</h3>
+                <RichText content={doenca.fontes_complementares} small />
+              </div>
+            )}
+
+            {/* Fallback para fontes antigas sem separação */}
+            {!doenca.fontes_medicas && !doenca.fontes_metafisicas && !doenca.fontes_complementares && doenca.fontes && (
+              <RichText content={doenca.fontes} small />
+            )}
           </section>
         )}
       </div>

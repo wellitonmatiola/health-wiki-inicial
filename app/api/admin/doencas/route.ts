@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { nome, cid10, descricao_medica, descricao_metafisica, fontes, status } = body;
+    const { nome, cid10, descricao_medica, descricao_metafisica, fontes, fontes_medicas, fontes_metafisicas, fontes_complementares, status } = body;
 
     if (!nome?.trim()) {
       return NextResponse.json({ error: 'Nome é obrigatório' }, { status: 400 });
@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
     const db = supabaseAdmin();
     const { data, error } = await db
       .from('doencas')
-      .insert({ nome, cid10, descricao_medica, descricao_metafisica, fontes, status: status ?? 'Em coleta' })
-      .select('id, nome, cid10, status, descricao_medica, descricao_metafisica, fontes, reiki')
+      .insert({ nome, cid10, descricao_medica, descricao_metafisica, fontes, fontes_medicas, fontes_metafisicas, fontes_complementares, status: status ?? 'Em coleta' })
+      .select('id, nome, cid10, status, descricao_medica, descricao_metafisica, fontes, fontes_medicas, fontes_metafisicas, fontes_complementares, reiki')
       .single();
 
     if (error) throw error;

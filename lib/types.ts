@@ -66,6 +66,9 @@ export interface Doenca {
   reiki: string[] | null;
   status: Status;
   fontes: string | null;
+  fontes_medicas: string | null;
+  fontes_metafisicas: string | null;
+  fontes_complementares: string | null;
   chas: Cha[];
   causas_emocionais: CausaEmocional[];
   chakras: Chakra[];
@@ -83,6 +86,9 @@ export interface DoencaResumo {
   descricao_medica: string | null;
   descricao_metafisica: string | null;
   fontes: string | null;
+  fontes_medicas: string | null;
+  fontes_metafisicas: string | null;
+  fontes_complementares: string | null;
   reiki: string[] | null;
 }
 
