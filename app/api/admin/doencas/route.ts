@@ -25,8 +25,7 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error;
     return NextResponse.json({ ok: true, doenca: data });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erro interno';
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }

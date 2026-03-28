@@ -2,10 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const cookieStore = cookies();
   if (cookieStore.get('admin_auth')?.value !== 'true') {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
+  if (!UUID_RE.test(params.id)) {
+    return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
   }
 
   try {
@@ -20,9 +26,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     if (error) throw error;
     return NextResponse.json({ ok: true });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erro interno';
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }
 
@@ -32,13 +37,16 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
+  if (!UUID_RE.test(params.id)) {
+    return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+  }
+
   try {
     const db = supabaseAdmin();
     const { error } = await db.from('doencas').delete().eq('id', params.id);
     if (error) throw error;
     return NextResponse.json({ ok: true });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erro interno';
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }
