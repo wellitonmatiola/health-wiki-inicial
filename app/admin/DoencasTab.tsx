@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, ChevronRight, Save, X, Plus, Trash2, ExternalLink } from 'lucide-react';
+import { Search, ChevronRight, Save, X, Plus, Trash2, ExternalLink, PlusCircle, AlertTriangle } from 'lucide-react';
 import type { DoencaResumo, Status } from '@/lib/types';
 import { COR_CHAKRA } from '@/lib/utils';
 
@@ -12,12 +12,11 @@ interface Props {
 
 const STATUS_OPTIONS: Status[] = ['Em coleta', 'Revisão', 'Publicado'];
 const STATUS_CLASS: Record<Status, string> = {
-  'Publicado':  'status-publicado',
-  'Revisão':    'status-revisao',
-  'Em coleta':  'status-em-coleta',
+  'Publicado': 'status-publicado',
+  'Revisão': 'status-revisao',
+  'Em coleta': 'status-em-coleta',
 };
 
-// Cada tipo de relação e seus metadados
 const RELACOES = [
   { tipo: 'chakras',           label: '🌈 Chakras',           idKey: 'chakra_id',       nomeKey: 'nome',  extras: [] },
   { tipo: 'causas_emocionais', label: '🥲 Causas Emocionais', idKey: 'causa_id',        nomeKey: 'emocao', extras: [] },
@@ -27,17 +26,30 @@ const RELACOES = [
   { tipo: 'cromoterapia',      label: '💡 Cromoterapia',      idKey: 'cromoterapia_id', nomeKey: 'luz',   extras: [] },
 ];
 
+const FORM_VAZIO = {
+  id: '',
+  nome: '',
+  cid10: '',
+  descricao_medica: '',
+  descricao_metafisica: '',
+  fontes: '',
+  status: 'Em coleta' as Status,
+  reiki: [] as string[],
+};
+
 export default function DoencasTab({ doencas: inicial, complementos }: Props) {
   const [doencas, setDoencas] = useState(inicial);
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState<Status | 'todos'>('todos');
   const [editando, setEditando] = useState<string | null>(null);
+  const [criando, setCriando] = useState(false);
   const [form, setForm] = useState<any>(null);
   const [relacoes, setRelacoes] = useState<Record<string, any[]>>({});
   const [relacoesCarregadas, setRelacoesCarregadas] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [msgSalvo, setMsgSalvo] = useState('');
   const [buscaRel, setBuscaRel] = useState<Record<string, string>>({});
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const filtradas = useMemo(() => doencas.filter((d) => {
     const matchBusca = d.nome.toLowerCase().includes(busca.toLowerCase());
@@ -45,13 +57,31 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
     return matchBusca && matchStatus;
   }), [doencas, busca, filtroStatus]);
 
+  const contadores = useMemo(() => ({
+    total: doencas.length,
+    publicado: doencas.filter(d => d.status === 'Publicado').length,
+    revisao: doencas.filter(d => d.status === 'Revisão').length,
+    coleta: doencas.filter(d => d.status === 'Em coleta').length,
+  }), [doencas]);
+
+  function novaDoenca() {
+    setEditando(null);
+    setCriando(true);
+    setForm({ ...FORM_VAZIO });
+    setRelacoes({});
+    setRelacoesCarregadas(true);
+    setMsgSalvo('');
+    setBuscaRel({});
+  }
+
   async function abrirEditor(d: any) {
+    setCriando(false);
     setForm({ ...d });
     setEditando(d.id);
     setRelacoesCarregadas(false);
     setBuscaRel({});
+    setMsgSalvo('');
 
-    // Carrega relações existentes
     const res = await fetch(`/api/admin/doencas/${d.id}/relacoes-atual`);
     if (res.ok) {
       const data = await res.json();
@@ -60,11 +90,13 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
     setRelacoesCarregadas(true);
   }
 
-  function fecharEditor() {
+  function fechar() {
     setEditando(null);
+    setCriando(false);
     setForm(null);
     setRelacoes({});
     setMsgSalvo('');
+    setConfirmDelete(null);
   }
 
   async function salvar() {
@@ -72,39 +104,39 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
     setSalvando(true);
 
     try {
-      // Salva campos básicos
-      const r1 = await fetch(`/api/admin/doencas/${form.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: form.nome,
-          cid10: form.cid10,
-          descricao_medica: form.descricao_medica,
-          descricao_metafisica: form.descricao_metafisica,
-          fontes: form.fontes,
-          status: form.status,
-        }),
-      });
-      if (!r1.ok) throw new Error('Erro ao salvar campos');
-
-      // Salva cada relação
-      for (const rel of RELACOES) {
-        const items = relacoes[rel.tipo] ?? [];
-        const ids = items.map((item: any) => item[rel.idKey] ?? item.id);
-        const extras = rel.extras.length > 0
-          ? items.map((item: any) => Object.fromEntries(rel.extras.map(e => [e, item[e] ?? null])))
-          : undefined;
-
-        await fetch(`/api/admin/doencas/${form.id}/relacoes`, {
-          method: 'PUT',
+      if (criando) {
+        // Criar nova doença
+        const res = await fetch('/api/admin/doencas', {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tipo: rel.tipo, ids, extras }),
+          body: JSON.stringify(form),
         });
+        if (!res.ok) throw new Error('Erro ao criar doença');
+        const { doenca } = await res.json();
+
+        // Salvar relações da nova doença
+        await salvarRelacoes(doenca.id);
+
+        setDoencas(prev => [doenca, ...prev].sort((a, b) => a.nome.localeCompare(b.nome)));
+        setCriando(false);
+        setEditando(doenca.id);
+        setForm(doenca);
+        setMsgSalvo('Doença criada com sucesso!');
+      } else {
+        // Atualizar existente
+        const res = await fetch(`/api/admin/doencas/${form.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        });
+        if (!res.ok) throw new Error('Erro ao salvar');
+
+        await salvarRelacoes(form.id);
+
+        setDoencas(prev => prev.map(d => d.id === form.id ? { ...d, ...form } : d));
+        setMsgSalvo('Salvo com sucesso!');
       }
 
-      // Atualiza lista local
-      setDoencas((prev) => prev.map((d) => d.id === form.id ? { ...d, ...form } : d));
-      setMsgSalvo('Salvo com sucesso!');
       setTimeout(() => setMsgSalvo(''), 3000);
     } catch (e: any) {
       alert('Erro: ' + e.message);
@@ -113,24 +145,48 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
     }
   }
 
-  function addRelacao(tipo: string, item: any, nomeKey: string, idKey: string) {
+  async function salvarRelacoes(doencaId: string) {
+    for (const rel of RELACOES) {
+      const items = relacoes[rel.tipo] ?? [];
+      const ids = items.map((item: any) => item[rel.idKey] ?? item.id);
+      const extras = rel.extras.length > 0
+        ? items.map((item: any) => Object.fromEntries(rel.extras.map(e => [e, item[e] ?? null])))
+        : undefined;
+
+      await fetch(`/api/admin/doencas/${doencaId}/relacoes`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tipo: rel.tipo, ids, extras }),
+      });
+    }
+  }
+
+  async function excluir(id: string) {
+    const res = await fetch(`/api/admin/doencas/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setDoencas(prev => prev.filter(d => d.id !== id));
+      fechar();
+    } else {
+      alert('Erro ao excluir');
+    }
+    setConfirmDelete(null);
+  }
+
+  function addRelacao(tipo: string, item: any, idKey: string) {
     const jaExiste = (relacoes[tipo] ?? []).some((r: any) => (r[idKey] ?? r.id) === item.id);
     if (jaExiste) return;
-    setRelacoes((prev) => ({
-      ...prev,
-      [tipo]: [...(prev[tipo] ?? []), { ...item, [idKey]: item.id }],
-    }));
+    setRelacoes(prev => ({ ...prev, [tipo]: [...(prev[tipo] ?? []), { ...item, [idKey]: item.id }] }));
   }
 
   function removeRelacao(tipo: string, itemId: string, idKey: string) {
-    setRelacoes((prev) => ({
+    setRelacoes(prev => ({
       ...prev,
       [tipo]: (prev[tipo] ?? []).filter((r: any) => (r[idKey] ?? r.id) !== itemId),
     }));
   }
 
   function updateExtras(tipo: string, itemId: string, idKey: string, field: string, value: string) {
-    setRelacoes((prev) => ({
+    setRelacoes(prev => ({
       ...prev,
       [tipo]: (prev[tipo] ?? []).map((r: any) =>
         (r[idKey] ?? r.id) === itemId ? { ...r, [field]: value } : r
@@ -138,19 +194,37 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
     }));
   }
 
-  const doencaAtual = doencas.find((d) => d.id === editando);
+  const modoAberto = editando || criando;
 
   return (
     <div className="flex gap-6" style={{ minHeight: 'calc(100vh - 140px)' }}>
       {/* Lista lateral */}
-      <div className={`flex flex-col gap-3 ${editando ? 'w-72 shrink-0' : 'w-full'}`}>
-        {/* Filtros */}
+      <div className={`flex flex-col gap-3 ${modoAberto ? 'w-72 shrink-0' : 'w-full'}`}>
+
+        {/* Stats rápidas */}
+        {!modoAberto && (
+          <div className="grid grid-cols-4 gap-3 mb-2">
+            {[
+              { label: 'Total', val: contadores.total, cls: 'bg-parchment-100' },
+              { label: 'Publicadas', val: contadores.publicado, cls: 'status-publicado' },
+              { label: 'Revisão', val: contadores.revisao, cls: 'status-revisao' },
+              { label: 'Em coleta', val: contadores.coleta, cls: 'status-em-coleta' },
+            ].map(s => (
+              <div key={s.label} className="card p-4 text-center">
+                <p className="text-2xl font-serif font-bold">{s.val}</p>
+                <span className={`badge ${s.cls} text-xs mt-1`}>{s.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Barra de ações */}
         <div className="flex gap-2 flex-wrap">
-          <div className="relative flex-1 min-w-48">
+          <div className="relative flex-1 min-w-36">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
             <input
               className="input pl-9 py-2 text-sm"
-              placeholder="Buscar doença..."
+              placeholder="Buscar..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
             />
@@ -160,19 +234,22 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value as any)}
           >
-            <option value="todos">Todos os status</option>
-            {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+            <option value="todos">Todos</option>
+            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
+          <button onClick={novaDoenca} className="btn-primary text-sm py-2 px-3 shrink-0">
+            <PlusCircle size={15} /> Nova doença
+          </button>
         </div>
 
         <p className="text-xs text-[var(--muted)]">{filtradas.length} doenças</p>
 
         {/* Lista */}
-        <div className="space-y-1.5 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 230px)' }}>
+        <div className="space-y-1.5 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
           {filtradas.map((d) => (
             <button
               key={d.id}
-              onClick={() => editando === d.id ? fecharEditor() : abrirEditor(d)}
+              onClick={() => (editando === d.id && !criando) ? fechar() : abrirEditor(d)}
               className={`card w-full text-left px-4 py-3 flex items-center justify-between gap-2 transition-all ${
                 editando === d.id ? 'ring-2 ring-forest-500' : ''
               }`}
@@ -190,36 +267,60 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
         </div>
       </div>
 
-      {/* Editor */}
-      {editando && form && (
+      {/* Editor / Criador */}
+      {modoAberto && form && (
         <div className="flex-1 min-w-0 animate-fade-in">
           <div className="card p-6">
-            {/* Cabeçalho do editor */}
-            <div className="flex items-center justify-between mb-6 gap-4">
-              <h2 className="font-serif text-2xl font-bold truncate">{doencaAtual?.nome}</h2>
-              <div className="flex items-center gap-2 shrink-0">
-                {msgSalvo && (
-                  <span className="text-sm text-forest-600 font-medium">{msgSalvo}</span>
+            {/* Cabeçalho */}
+            <div className="flex items-center justify-between mb-6 gap-4 flex-wrap">
+              <h2 className="font-serif text-2xl font-bold">
+                {criando ? '✨ Nova doença' : form.nome}
+              </h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                {msgSalvo && <span className="text-sm text-forest-600 font-medium">{msgSalvo}</span>}
+                {!criando && (
+                  <button
+                    onClick={() => setConfirmDelete(form.id)}
+                    className="btn-secondary text-sm py-2 px-3 border-red-300 text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 size={14} /> Excluir
+                  </button>
                 )}
-                <button onClick={fecharEditor} className="btn-secondary text-sm py-2 px-3">
+                <button onClick={fechar} className="btn-secondary text-sm py-2 px-3">
                   <X size={15} /> Fechar
                 </button>
                 <button onClick={salvar} disabled={salvando} className="btn-primary text-sm py-2 px-4">
                   <Save size={15} />
-                  {salvando ? 'Salvando...' : 'Salvar tudo'}
+                  {salvando ? 'Salvando...' : criando ? 'Criar doença' : 'Salvar tudo'}
                 </button>
               </div>
             </div>
+
+            {/* Modal confirmação exclusão */}
+            {confirmDelete && (
+              <div className="mb-6 p-4 rounded-xl border border-red-200 bg-red-50 flex items-center gap-4">
+                <AlertTriangle size={20} className="text-red-500 shrink-0" />
+                <div className="flex-1">
+                  <p className="font-medium text-red-700 text-sm">Excluir "{form.nome}"?</p>
+                  <p className="text-xs text-red-600">Esta ação não pode ser desfeita. Todas as relações também serão removidas.</p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <button onClick={() => setConfirmDelete(null)} className="btn-secondary text-sm py-1.5 px-3">Cancelar</button>
+                  <button onClick={() => excluir(form.id)} className="btn-primary text-sm py-1.5 px-3 bg-red-600 hover:bg-red-700">Confirmar</button>
+                </div>
+              </div>
+            )}
 
             {/* Campos básicos */}
             <div className="space-y-4 mb-8">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Nome da doença</label>
+                  <label className="text-sm font-medium mb-1.5 block">Nome da doença *</label>
                   <input
                     className="input"
                     value={form.nome ?? ''}
                     onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                    placeholder="Ex: Ansiedade, Diabetes..."
                   />
                 </div>
                 <div>
@@ -235,13 +336,21 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
 
               <div>
                 <label className="text-sm font-medium mb-1.5 block">Status de publicação</label>
-                <select
-                  className="select"
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                >
-                  {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <div className="flex gap-2">
+                  {STATUS_OPTIONS.map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setForm({ ...form, status: s })}
+                      className={`badge cursor-pointer transition-all ${
+                        form.status === s
+                          ? STATUS_CLASS[s] + ' ring-2 ring-offset-1 ring-forest-400'
+                          : 'bg-parchment-100 text-[var(--muted)]'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -249,6 +358,7 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
                 <textarea
                   className="textarea"
                   style={{ minHeight: 120 }}
+                  placeholder="Descrição clínica, sintomas, mecanismo fisiopatológico..."
                   value={form.descricao_medica ?? ''}
                   onChange={(e) => setForm({ ...form, descricao_medica: e.target.value })}
                 />
@@ -259,6 +369,7 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
                 <textarea
                   className="textarea"
                   style={{ minHeight: 120 }}
+                  placeholder="Perspectiva emocional e metafísica da doença..."
                   value={form.descricao_metafisica ?? ''}
                   onChange={(e) => setForm({ ...form, descricao_metafisica: e.target.value })}
                 />
@@ -269,6 +380,7 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
                 <textarea
                   className="textarea"
                   style={{ minHeight: 80 }}
+                  placeholder="Títulos, autores, links..."
                   value={form.fontes ?? ''}
                   onChange={(e) => setForm({ ...form, fontes: e.target.value })}
                 />
@@ -279,11 +391,11 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
             {!relacoesCarregadas ? (
               <p className="text-sm text-[var(--muted)]">Carregando relações...</p>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <div className="divider">Relações e complementos</div>
 
                 {RELACOES.map((rel) => {
-                  const disponiveis = (complementos[rel.tipo] ?? []);
+                  const disponiveis = complementos[rel.tipo] ?? [];
                   const selecionados = relacoes[rel.tipo] ?? [];
                   const selecionadosIds = new Set(selecionados.map((s: any) => s[rel.idKey] ?? s.id));
                   const termoBusca = buscaRel[rel.tipo] ?? '';
@@ -293,7 +405,12 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
 
                   return (
                     <div key={rel.tipo} className="border border-[var(--border)] rounded-xl p-4">
-                      <h3 className="font-medium text-sm mb-3">{rel.label}</h3>
+                      <h3 className="font-medium text-sm mb-3 flex items-center justify-between">
+                        {rel.label}
+                        <span className="text-xs text-[var(--muted)] font-normal">
+                          {selecionados.length} selecionado{selecionados.length !== 1 ? 's' : ''}
+                        </span>
+                      </h3>
 
                       {/* Itens selecionados */}
                       {selecionados.length > 0 && (
@@ -303,20 +420,19 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
                             return (
                               <div key={itemId} className="bg-parchment-50 rounded-lg p-3">
                                 <div className="flex items-center justify-between mb-1">
-                                  <p className="font-medium text-sm">
+                                  <p className="font-medium text-sm flex items-center gap-1.5">
                                     {item.cor && (
-                                      <span className={`inline-block w-2.5 h-2.5 rounded-full mr-2 ${COR_CHAKRA[item.cor] ?? 'bg-gray-400'}`} />
+                                      <span className={`inline-block w-2.5 h-2.5 rounded-full ${COR_CHAKRA[item.cor] ?? 'bg-gray-400'}`} />
                                     )}
                                     {item[rel.nomeKey]}
                                   </p>
                                   <button
                                     onClick={() => removeRelacao(rel.tipo, itemId, rel.idKey)}
-                                    className="text-red-400 hover:text-red-600 transition-colors"
+                                    className="text-red-400 hover:text-red-600 transition-colors p-0.5"
                                   >
-                                    <Trash2 size={14} />
+                                    <X size={14} />
                                   </button>
                                 </div>
-                                {/* Campos extras específicos por doença */}
                                 {rel.extras.map((field) => (
                                   <div key={field} className="mt-1.5">
                                     <label className="text-xs text-[var(--muted)] capitalize block mb-1">
@@ -324,8 +440,8 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
                                     </label>
                                     <textarea
                                       className="textarea text-sm"
-                                      style={{ minHeight: 60 }}
-                                      placeholder={`${field.replace(/_/g, ' ')} específico para esta doença...`}
+                                      style={{ minHeight: 56 }}
+                                      placeholder={`${field.replace(/_/g, ' ')} para esta doença...`}
                                       value={item[field] ?? ''}
                                       onChange={(e) => updateExtras(rel.tipo, itemId, rel.idKey, field, e.target.value)}
                                     />
@@ -337,38 +453,36 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
                         </div>
                       )}
 
-                      {/* Adicionar novo */}
-                      <div>
-                        <input
-                          className="input text-sm mb-2"
-                          placeholder={`Buscar ${rel.label.split(' ').slice(1).join(' ')}...`}
-                          value={termoBusca}
-                          onChange={(e) => setBuscaRel({ ...buscaRel, [rel.tipo]: e.target.value })}
-                        />
-                        {termoBusca && (
-                          <div className="border border-[var(--border)] rounded-lg overflow-hidden max-h-48 overflow-y-auto">
-                            {filtrados.filter((item: any) => !selecionadosIds.has(item.id)).slice(0, 8).map((item: any) => (
-                              <button
-                                key={item.id}
-                                onClick={() => {
-                                  addRelacao(rel.tipo, item, rel.nomeKey, rel.idKey);
-                                  setBuscaRel({ ...buscaRel, [rel.tipo]: '' });
-                                }}
-                                className="w-full text-left px-3 py-2 text-sm hover:bg-parchment-50 flex items-center gap-2 border-b border-[var(--border)] last:border-0"
-                              >
-                                {item.cor && (
-                                  <span className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${COR_CHAKRA[item.cor] ?? 'bg-gray-400'}`} />
-                                )}
-                                <span className="truncate">{item[rel.nomeKey]}</span>
-                                <Plus size={13} className="text-forest-500 ml-auto shrink-0" />
-                              </button>
-                            ))}
-                            {filtrados.filter((item: any) => !selecionadosIds.has(item.id)).length === 0 && (
-                              <p className="text-sm text-[var(--muted)] px-3 py-2">Nenhum resultado</p>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                      {/* Busca para adicionar */}
+                      <input
+                        className="input text-sm mb-2"
+                        placeholder={`Adicionar ${rel.label.split(' ').slice(1).join(' ')}...`}
+                        value={termoBusca}
+                        onChange={(e) => setBuscaRel({ ...buscaRel, [rel.tipo]: e.target.value })}
+                      />
+                      {termoBusca && (
+                        <div className="border border-[var(--border)] rounded-lg overflow-hidden max-h-44 overflow-y-auto">
+                          {filtrados.filter((item: any) => !selecionadosIds.has(item.id)).slice(0, 8).map((item: any) => (
+                            <button
+                              key={item.id}
+                              onClick={() => {
+                                addRelacao(rel.tipo, item, rel.idKey);
+                                setBuscaRel({ ...buscaRel, [rel.tipo]: '' });
+                              }}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-parchment-50 flex items-center gap-2 border-b border-[var(--border)] last:border-0"
+                            >
+                              {item.cor && (
+                                <span className={`inline-block w-2.5 h-2.5 rounded-full shrink-0 ${COR_CHAKRA[item.cor] ?? 'bg-gray-400'}`} />
+                              )}
+                              <span className="truncate">{item[rel.nomeKey]}</span>
+                              <Plus size={13} className="text-forest-500 ml-auto shrink-0" />
+                            </button>
+                          ))}
+                          {filtrados.filter((item: any) => !selecionadosIds.has(item.id)).length === 0 && (
+                            <p className="text-sm text-[var(--muted)] px-3 py-2">Nenhum resultado</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -376,16 +490,18 @@ export default function DoencasTab({ doencas: inicial, complementos }: Props) {
             )}
 
             {/* Link para página pública */}
-            <div className="mt-6 pt-6 border-t border-[var(--border)]">
-              <a
-                href={`/doencas/${form.id}`}
-                target="_blank"
-                className="flex items-center gap-2 text-sm text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
-              >
-                <ExternalLink size={14} />
-                Ver página pública desta doença
-              </a>
-            </div>
+            {!criando && (
+              <div className="mt-6 pt-6 border-t border-[var(--border)]">
+                <a
+                  href={`/doencas/${form.id}`}
+                  target="_blank"
+                  className="flex items-center gap-2 text-sm text-[var(--muted)] hover:text-[var(--accent)] transition-colors"
+                >
+                  <ExternalLink size={14} />
+                  Ver página pública desta doença
+                </a>
+              </div>
+            )}
           </div>
         </div>
       )}
