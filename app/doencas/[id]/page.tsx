@@ -29,10 +29,10 @@ export default async function DoencaPage({ params }: { params: { id: string } })
             Voltar à busca
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-forest-500 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-forest-900 flex items-center justify-center">
               <Leaf size={12} className="text-white" />
             </div>
-            <span className="font-serif text-base font-semibold text-forest-700">Health Wiki</span>
+            <span className="text-base font-semibold text-[var(--text)]">Health Wiki</span>
           </div>
         </div>
       </header>
@@ -50,7 +50,7 @@ export default async function DoencaPage({ params }: { params: { id: string } })
               {doenca.status}
             </span>
           </div>
-          <h1 className="font-serif text-4xl md:text-5xl font-bold text-[var(--text)] leading-tight mb-6">
+          <h1 className="text-4xl md:text-5xl font-bold text-[var(--text)] leading-tight mb-6">
             {doenca.nome}
           </h1>
 
@@ -70,7 +70,7 @@ export default async function DoencaPage({ params }: { params: { id: string } })
 
         {/* Descrição Metafísica */}
         {doenca.descricao_metafisica && (
-          <section className="card p-7 mb-6 animate-fade-up delay-2" style={{ borderLeft: '3px solid var(--accent-2)' }}>
+          <section className="card p-7 mb-6 animate-fade-up delay-2" style={{ borderLeft: '3px solid var(--border)' }}>
             <h2 className="font-serif text-xl font-semibold mb-3 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-terra-400 inline-block" />
               Causa Metafísica

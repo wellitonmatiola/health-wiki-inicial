@@ -39,10 +39,10 @@ export default async function HomePage({
       <header className="border-b border-[var(--border)] bg-[var(--bg-card)]">
         <div className="max-w-5xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-forest-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-forest-900 flex items-center justify-center">
               <Leaf size={16} className="text-white" />
             </div>
-            <span className="font-serif text-xl font-semibold text-forest-700">Health Wiki</span>
+            <span className="text-xl font-semibold text-[var(--text)]">Health Wiki</span>
           </div>
           <Link href="/admin" className="text-sm text-[var(--muted)] hover:text-[var(--accent)] transition-colors">
             Painel Admin →
@@ -52,12 +52,12 @@ export default async function HomePage({
 
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-6 pt-16 pb-10 text-center">
-        <p className="text-sm font-mono text-[var(--muted)] tracking-widest uppercase mb-4 animate-fade-in">
+        <p className="text-sm text-[var(--muted)] tracking-widest uppercase mb-4 animate-fade-in">
           Enciclopédia Integrativa
         </p>
-        <h1 className="font-serif text-5xl font-bold text-[var(--text)] leading-tight mb-4 animate-fade-up">
+        <h1 className="text-5xl font-bold text-[var(--text)] leading-tight mb-4 animate-fade-up">
           O que você gostaria<br />
-          <span className="italic text-forest-600">de compreender?</span>
+          <span className="text-[var(--muted)]">de compreender?</span>
         </h1>
         <p className="text-[var(--muted)] max-w-lg mx-auto mb-10 animate-fade-up delay-1">
           Explore a visão médica, metafísica e holística das doenças — com chás, cristais, chakras, aromaterapia e muito mais.
@@ -104,11 +104,11 @@ export default async function HomePage({
                 className={`card p-5 block animate-fade-up delay-${Math.min(i + 1, 5)}`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <h2 className="font-serif text-lg font-semibold text-[var(--text)] leading-snug">
+                  <h2 className="text-base font-semibold text-[var(--text)] leading-snug">
                     {d.nome}
                   </h2>
                   {d.cid10 && (
-                    <span className="badge bg-parchment-100 text-[var(--muted)] shrink-0 text-xs mt-0.5">
+                    <span className="badge bg-forest-100 text-[var(--muted)] shrink-0 text-xs mt-0.5">
                       {d.cid10.split(',')[0].trim()}
                     </span>
                   )}
@@ -118,7 +118,7 @@ export default async function HomePage({
                     {d.descricao_medica}
                   </p>
                 )}
-                <span className="inline-block mt-3 text-forest-600 text-sm font-medium">
+                <span className="inline-block mt-3 text-[var(--muted)] text-sm font-medium">
                   Ver detalhes →
                 </span>
               </Link>
